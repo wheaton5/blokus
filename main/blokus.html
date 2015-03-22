@@ -84,10 +84,11 @@ piece5_3 = [[1,1,1,1,0],
             [0,0,0,0,0],
             [0,0,0,0,0],
             [0,0,0,0,0]]
-piece5_4 = [[0,0,0,0,0],
-            [0,0,1,0,0],
-            [0,1,1,1,0],
-            [0,0,1,0,0],
+piece5_4 = [
+            [0,1,0,0,0],
+            [1,1,1,0,0],
+            [0,1,0,0,0],
+            [0,0,0,0,0],
             [0,0,0,0,0]]
 piece5_5 = [[1,1,1,0,0],
             [0,0,1,1,0],
@@ -116,12 +117,13 @@ piece_array = [piece5_1, piece5_2, piece5_3, piece5_4, piece5_5,
 var drag = d3.behavior.drag()
         .on("drag", dragmove)
         .on("dragend", dropHandler);
-function dragmove(d) {
-    var x = d3.event.x;
-    var y = d3.event.y;
-    d3.select(this).attr("transform", "translate(" + x + "," + y + ")");
-}
-  function onDragDrop(dragHandler, dropHandler) {
+  function dragmove(d) {
+            d.x += d3.event.dx;
+            d.y += d3.event.dy;
+     // console.log("x:"+x+" y:"+y)
+            d3.select(this).attr("transform", "translate(" + d.x + "," + d.y + ")");
+  }  
+function onDragDrop(dragHandler, dropHandler) {
         var drag = d3.behavior.drag();
 
     drag.on("drag", dragHandler)
@@ -146,7 +148,7 @@ function shape_to_array(shape_matrix, name, square_size, x_offset, y_offset){
     return rect_array
 }
 var red_pieces = []
-var piece_offset = [0,2,5,7,12,15,19,22]
+var piece_offset = [0,2,5,8,12,15,19,22]
 for(var i = 0; i < piece_array.length; i++){
     var x_offset = piece_offset[i]*square_size
     var y_offset = 0
@@ -167,18 +169,6 @@ for(var i = 0; i < piece_array.length; i++){
             .attr("ry", 3)
             .style("fill", "red")
     }
-    //svg.selectAll(".player1").data(red_piece, function(d){ return d.name}).
-    //    enter().append("rect")
-    //    .attr("x", function(d) { return d.x })
-    //    .attr("y", function(d) { return d.y })
-    //    .attr("width", square_size)
-    //    .attr("height", square_size)
-    //    .style("fill", "red")
-    //    .attr("rx", 3)
-    //    .attr("ry", 3)
-    //    .style("opacity", 0.4)
-    //    .style("stroke-width",2)
-    //    .style("stroke","white")
     red_pieces.push(piece)
 }
 //var blue_pieces = []
