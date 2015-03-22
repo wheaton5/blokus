@@ -121,7 +121,13 @@ function dragmove(d) {
     var y = d3.event.y;
     d3.select(this).attr("transform", "translate(" + x + "," + y + ")");
 }
+  function onDragDrop(dragHandler, dropHandler) {
+        var drag = d3.behavior.drag();
 
+    drag.on("drag", dragHandler)
+    .on("dragend", dropHandler);
+    return drag;
+    }
 function dropHandler(d) {
     // alert('dropped');
 }
@@ -132,7 +138,7 @@ function shape_to_array(shape_matrix, name, square_size, x_offset, y_offset){
     for(var i = 0; i < shape_matrix.length; i++){
         for(var j = 0; j < shape_matrix[i].length; j++){
             if(shape_matrix[i][j] == 1){
-                rect_array.push({name:name+count, x:i*square_size+x_offset, y:j*square_size+y_offset})
+                rect_array.push({name:name+count, x:i*square_size, y:j*square_size})
                 count++
             }
         }
@@ -145,7 +151,9 @@ for(var i = 0; i < piece_array.length; i++){
     var x_offset = piece_offset[i]*square_size
     var y_offset = 0
     var red_piece = shape_to_array(piece_array[i], "red_"+i+"_", square_size, x_offset, y_offset)
-    var piece = svg.append("g").data([{x:x_offset, y:y_offset}]).call(drag);
+    var piece = svg.append("g").data([{x:x_offset, y:y_offset}])
+        .attr("transform", function (d) { return "translate(" + d.x + "," + d.y + ")"; })
+        .call(onDragDrop(dragmove, dropHandler));
     for(var j = 0; j < red_piece.length; j++){
         piece.append("rect")
             .attr("x", red_piece[j].x)
