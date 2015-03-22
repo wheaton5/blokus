@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+    <title>Blokus</title>
+    
+    <style>
+        .board g{
+        }
+        .player1 g{
+            color = "red"
+        }
+        .player2 g{
+            color = "blue"
+        }
+        .player3 g{
+            color = "green"
+        }
+        .player4 g{
+            color = "yellow"
+        }
+        .square rect{
+            stroke-opacity: .7;
+            fill = "whitesmoke";
+            color = "lightgrey";
+        }
+    </style>
+<body>
+
+<script src="http:d3js.org/d3.v3.min.js"></script>
+
+<script>
+var width = 1200
+var height = 1200
+var svg = d3.select("body").append("svg")
+        .attr("width", width)
+        .attr("height", height);
+
+var square_board = []
+var linear_board = []
+var board_size = 20
+var square_size = 20
+var piece_area = 200
+player = {
+    None: -1,
+    RED : 0,
+    BLUE : 1,
+    GREEN : 2,
+    YELLOW : 3,
+}
+for(var i = 0; i < board_size; i++){
+    square_board.push([])
+    for(var j = 0; j < board_size; j++){
+        var square = {name: "board"+(i*j)+j, x:i, y:j, x_loc : i*square_size, y_loc :j*square_size, player: player.None}
+        square_board[i].push(square)
+        linear_board.push(square)
+    }
+}
+
+var squares = svg.selectAll(".square").data(linear_board)
+squares.enter()
+    .append("rect")
+    .attr("x", function(d){ return d.x_loc + piece_area })
+    .attr("y", function(d){ return d.y_loc + piece_area })
+    .attr("rx", 3)
+    .attr("ry", 3)
+    .attr("width", square_size )
+    .attr("height", square_size )
+    .style("fill", "whitesmoke")
+    .style("stroke", "white")
+    .style("stroke-width",2)
+
+//make the pieces
+piece5_1 = [[1,1,1,1,1],
+            [0,0,0,0,0],
+            [0,0,0,0,0],
+            [0,0,0,0,0],
+            [0,0,0,0,0]]
+piece5_2 = [[1,1,1,1,0],
+            [1,0,0,0,0],
+            [0,0,0,0,0],
+            [0,0,0,0,0],
+            [0,0,0,0,0]]
+piece5_3 = [[1,1,1,1,0],
+            [0,1,0,0,0],
+            [0,0,0,0,0],
+            [0,0,0,0,0],
+            [0,0,0,0,0]]
+piece5_4 = [[0,0,0,0,0],
+            [0,0,1,0,0],
+            [0,1,1,1,0],
+            [0,0,1,0,0],
+            [0,0,0,0,0]]
+piece5_5 = [[1,1,1,0,0],
+            [0,0,1,1,0],
+            [0,0,0,0,0],
+            [0,0,0,0,0],
+            [0,0,0,0,0]]
+piece5_6 = [[1,1,1,0,0],
+            [1,0,0,0,0],
+            [1,0,0,0,0],
+            [0,0,0,0,0],
+            [0,0,0,0,0]]
+piece5_7 = [[1,1,1,0,0],
+            [0,1,1,0,0],
+            [0,0,0,0,0],
+            [0,0,0,0,0],
+            [0,0,0,0,0]]
+piece5_8 = [[1,0,0,0,0],
+            [1,1,1,0,0],
+            [0,1,0,0,0],
+            [0,0,0,0,0],
+            [0,0,0,0,0]]
+piece_array = [piece5_1, piece5_2, piece5_3, piece5_4, piece5_5,
+                piece5_6, piece5_7, piece5_8]
+
+
+var drag = d3.behavior.drag()
+        .on("drag", dragmove)
+        .on("dragend", dropHandler);
+function dragmove(d) {
+    var x = d3.event.x;
+    var y = d3.event.y;
+    d3.select(this).attr("transform", "translate(" + x + "," + y + ")");
+}
+
+function dropHandler(d) {
+    // alert('dropped');
+}
+
+function shape_to_array(shape_matrix, name, square_size, x_offset, y_offset){
+    rect_array = []
+    count = 0
+    for(var i = 0; i < shape_matrix.length; i++){
+        for(var j = 0; j < shape_matrix[i].length; j++){
+            if(shape_matrix[i][j] == 1){
+                rect_array.push({name:name+count, x:i*square_size+x_offset, y:j*square_size+y_offset})
+                count++
+            }
+        }
+    }
+    return rect_array
+}
+var red_pieces = []
+var piece_offset = [0,2,5,7,12,15,19,22]
+for(var i = 0; i < piece_array.length; i++){
+    var x_offset = piece_offset[i]*square_size
+    var y_offset = 0
+    var red_piece = shape_to_array(piece_array[i], "red_"+i+"_", square_size, x_offset, y_offset)
+    var piece = svg.append("g").data([{x:x_offset, y:y_offset}]).call(drag);
+    for(var j = 0; j < red_piece.length; j++){
+        piece.append("rect")
+            .attr("x", red_piece[j].x)
+            .attr("y", red_piece[j].y)
+            .attr("width", square_size)
+            .attr("height", square_size)
+            .style("opacity", 0.5)
+            .style("stroke-width",2)
+            .style("stroke", "white")
+            .attr("rx", 3)
+            .attr("ry", 3)
+            .style("fill", "red")
+    }
+    //svg.selectAll(".player1").data(red_piece, function(d){ return d.name}).
+    //    enter().append("rect")
+    //    .attr("x", function(d) { return d.x })
+    //    .attr("y", function(d) { return d.y })
+    //    .attr("width", square_size)
+    //    .attr("height", square_size)
+    //    .style("fill", "red")
+    //    .attr("rx", 3)
+    //    .attr("ry", 3)
+    //    .style("opacity", 0.4)
+    //    .style("stroke-width",2)
+    //    .style("stroke","white")
+    red_pieces.push(piece)
+}
+//var blue_pieces = []
+//for(var i = 0; i < piece_array.length; i++){
+//    var blue_piece = shape_to_array(piece_array[i], "blue_"+i+"_", x_offset, y_offset)
+//    svg.selectAll(".player2").data(blue_piece, funtion(d){return d.name})
+//        .enter().append("rect")
+//        .attr("x", function(d) { return d.x*square_size + piece_offset[i]*square_size})
+//        .attr("y", function(d) { return d.y*square_size
+//}
+
+
+</script>
+</body>
