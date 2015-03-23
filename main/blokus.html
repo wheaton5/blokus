@@ -131,7 +131,10 @@ function onDragDrop(dragHandler, dropHandler) {
     return drag;
     }
 function dropHandler(d) {
-    // alert('dropped');
+    var x = d.x
+    var y = d.y
+    d3.select(this).attr("transform", "translate(" + Math.round(x/square_size)*square_size + "," + 
+        Math.round(y/square_size) * square_size + ")");
 }
 
 function shape_to_array(shape_matrix, name, square_size, x_offset, y_offset){
