@@ -117,23 +117,28 @@ var active_piece = null
 var drag = d3.behavior.drag()
         .on("drag", dragmove)
         .on("dragend", dropHandler);
-  function dragmove(d) {
-            d.x += d3.event.dx;
-            d.y += d3.event.dy;
-            console.log("move old cx "+d3.select(this).attr("cx"))
-            console.log("adding "+d3.event.dx)
-            var center_x = d3.event.dx + parseFloat(d3.select(this).attr("cx"))
-            var center_y = d3.event.dy + parseFloat(d3.select(this).attr("cy"))
-            console.log("makes new cx "+center_x)
-            var rotate = d3.transform(d3.select(this).attr("transform")).rotate
-            d3.select(this).attr("transform", "translate(" + d.x + "," + d.y + ") rotate("+rotate+")")
-                .attr("cx", center_x)
-                .attr("cy", center_y);
+  
+function dragmove(d) {
     if(active_piece != null){
         active_piece.attr("stroke","white")
     }
     active_piece = d3.select(this)
     active_piece.attr("stroke", "grey")
+
+    d.x += d3.event.dx;
+    d.y += d3.event.dy;
+    var trans = d3.transform(active_piece.attr("transform"))
+    var rotate = trans.rotate
+    var scale = trans.scale[0]
+            
+       // var center_x = d3.event.dx + parseFloat(d3.select(this).attr("cx"))
+       //     var center_y = d3.event.dy + parseFloat(d3.select(this).attr("cy"))
+       //     console.log("makes new cx "+center_x)
+       //     var rotate = d3.transform(d3.select(this).attr("transform")).rotate
+       //     d3.select(this).attr("transform", "translate(" + d.x + "," + d.y + ") rotate("+rotate+")")
+       //         .attr("cx", center_x)
+       //         .attr("cy", center_y);
+        update_trans(active_piece, d.x, d.y, rotate, scale) 
 }  
 function onDragDrop(dragHandler, dropHandler) {
         var drag = d3.behavior.drag();
@@ -143,39 +148,39 @@ function onDragDrop(dragHandler, dropHandler) {
     return drag;
     }
 function dropHandler(d) {
-    var x = d.x
-    var y = d.y
-    var new_x = Math.round(x/square_size)*square_size
-    var new_y = Math.round(y/square_size)*square_size
-    var center_x = new_x-x + parseFloat(d3.select(this).attr("cx"))
-    var center_y = new_y-y + parseFloat(d3.select(this).attr("cy"))
-    console.log("blah x "+center_x)
-    console.log("blah y "+center_y)
-    var rotate = d3.transform(active_piece.attr("transform")).rotate
-    d3.select(this).attr("transform", "translate(" + new_x + "," + new_y + ") rotate("+rotate+")")
-        .attr("cx", center_x)
-        .attr("cy", center_y);
+    var trans = d3.transform(active_piece.attr("transform"))
+    var rotate = trans.rotate
+    var scale = trans.scale[0]
+       
+    d.x = Math.round(d.x/square_size)*square_size
+    d.y = Math.round(d.y/square_size)*square_size
+    update_trans(active_piece, d.x, d.y, rotate, scale)
+    //d3.select(this).attr("transform", "translate(" + new_x + "," + new_y + ") rotate("+rotate+")")
 }
 
-function mirror(d){
-    
-}
-
-function right_rotate_tween(d,i,a){
-
-        //return d3.int "rotate("+(-90)+" "+cx+" "+cy+")")
-}
-function right_rotate(d){
+function mirror(){
     if(active_piece != null){
-        var cx = parseFloat(active_piece.attr("cx"))
-        var cy = parseFloat(active_piece.attr("cy"))
-        var x = d3.transform(active_piece.attr("transform")).translate[0]
-        var y = d3.transform(active_piece.attr("transform")).translate[1]
-        var rotate = d3.transform(active_piece.attr("transform")).rotate - 90
-        //d3.select(active_piece).transition().duration(5000).attrTween("transform", i
-        //var translate = active_piece.attr("transform")
-        active_piece.attr("transform", "translate("+x+", "+y+") rotate("+(rotate)+" "+0+" "+0+")") 
+        var trans = d3.transform(active_piece.attr("transform"))
+        var x = trans.translate[0];
+        var y = trans.translate[1];
+        var rotate = trans.rotate
+        var scale = -trans.scale[0]
+        update_trans(active_piece, x, y, rotate, scale)
+    }
+}
 
+function update_trans(p, x, y, r, s){
+    p.attr("transform", "translate("+x+","+y+") rotate("+r+") scale("+s+",1)")
+}
+
+function right_rotate(){
+    if(active_piece != null){
+        var trans = d3.transform(active_piece.attr("transform"))
+        var x = trans.translate[0]
+        var y = trans.translate[1]
+        var rotate = trans.rotate - 90
+        var scale = trans.scale[0]
+        update_trans(active_piece, x, y, rotate, scale)
     }
     console.log("right_rotate")
 }
@@ -196,6 +201,9 @@ function shape_to_array(shape_matrix, name, square_size, x_offset, y_offset){
 function handle_keys(d){
     if(d3.event.keyCode == 16){
         right_rotate()
+    }
+    if(d3.event.keyCode == 17){
+        mirror()
     }
 }
 d3.select("body").on("keydown", handle_keys);
