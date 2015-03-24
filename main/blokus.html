@@ -112,7 +112,7 @@ piece5_8 = [[1,0,0,0,0],
             [0,0,0,0,0]]
 piece_array = [piece5_1, piece5_2, piece5_3, piece5_4, piece5_5,
                 piece5_6, piece5_7, piece5_8]
-
+var active_piece = null
 
 var drag = d3.behavior.drag()
         .on("drag", dragmove)
@@ -120,9 +120,21 @@ var drag = d3.behavior.drag()
   function dragmove(d) {
             d.x += d3.event.dx;
             d.y += d3.event.dy;
-     // console.log("x:"+x+" y:"+y)
-            d3.select(this).attr("transform", "translate(" + d.x + "," + d.y + ")");
-  }  
+            console.log("move old cx "+d3.select(this).attr("cx"))
+            console.log("adding "+d3.event.dx)
+            var center_x = d3.event.dx + parseFloat(d3.select(this).attr("cx"))
+            var center_y = d3.event.dy + parseFloat(d3.select(this).attr("cy"))
+            console.log("makes new cx "+center_x)
+            var rotate = d3.transform(d3.select(this).attr("transform")).rotate
+            d3.select(this).attr("transform", "translate(" + d.x + "," + d.y + ") rotate("+rotate+")")
+                .attr("cx", center_x)
+                .attr("cy", center_y);
+    if(active_piece != null){
+        active_piece.attr("stroke","white")
+    }
+    active_piece = d3.select(this)
+    active_piece.attr("stroke", "grey")
+}  
 function onDragDrop(dragHandler, dropHandler) {
         var drag = d3.behavior.drag();
 
@@ -133,8 +145,39 @@ function onDragDrop(dragHandler, dropHandler) {
 function dropHandler(d) {
     var x = d.x
     var y = d.y
-    d3.select(this).attr("transform", "translate(" + Math.round(x/square_size)*square_size + "," + 
-        Math.round(y/square_size) * square_size + ")");
+    var new_x = Math.round(x/square_size)*square_size
+    var new_y = Math.round(y/square_size)*square_size
+    var center_x = new_x-x + parseFloat(d3.select(this).attr("cx"))
+    var center_y = new_y-y + parseFloat(d3.select(this).attr("cy"))
+    console.log("blah x "+center_x)
+    console.log("blah y "+center_y)
+    var rotate = d3.transform(active_piece.attr("transform")).rotate
+    d3.select(this).attr("transform", "translate(" + new_x + "," + new_y + ") rotate("+rotate+")")
+        .attr("cx", center_x)
+        .attr("cy", center_y);
+}
+
+function mirror(d){
+    
+}
+
+function right_rotate_tween(d,i,a){
+
+        //return d3.int "rotate("+(-90)+" "+cx+" "+cy+")")
+}
+function right_rotate(d){
+    if(active_piece != null){
+        var cx = parseFloat(active_piece.attr("cx"))
+        var cy = parseFloat(active_piece.attr("cy"))
+        var x = d3.transform(active_piece.attr("transform")).translate[0]
+        var y = d3.transform(active_piece.attr("transform")).translate[1]
+        var rotate = d3.transform(active_piece.attr("transform")).rotate - 90
+        //d3.select(active_piece).transition().duration(5000).attrTween("transform", i
+        //var translate = active_piece.attr("transform")
+        active_piece.attr("transform", "translate("+x+", "+y+") rotate("+(rotate)+" "+0+" "+0+")") 
+
+    }
+    console.log("right_rotate")
 }
 
 function shape_to_array(shape_matrix, name, square_size, x_offset, y_offset){
@@ -150,28 +193,46 @@ function shape_to_array(shape_matrix, name, square_size, x_offset, y_offset){
     }
     return rect_array
 }
+function handle_keys(d){
+    if(d3.event.keyCode == 16){
+        right_rotate()
+    }
+}
+d3.select("body").on("keydown", handle_keys);
+
 var red_pieces = []
 var piece_offset = [0,2,5,8,12,15,19,22]
 for(var i = 0; i < piece_array.length; i++){
     var x_offset = piece_offset[i]*square_size
     var y_offset = 0
+    var y_center = 0.0
+    var x_center = 0.0
+    var center_denom = 0.0
     var red_piece = shape_to_array(piece_array[i], "red_"+i+"_", square_size, x_offset, y_offset)
     var piece = svg.append("g").data([{x:x_offset, y:y_offset}])
+        .attr("stroke","white")
         .attr("transform", function (d) { return "translate(" + d.x + "," + d.y + ")"; })
-        .call(onDragDrop(dragmove, dropHandler));
+        .call(onDragDrop(dragmove, dropHandler))
+        
+        
     for(var j = 0; j < red_piece.length; j++){
         piece.append("rect")
-            .attr("x", red_piece[j].x)
-            .attr("y", red_piece[j].y)
+            .attr("transform", "translate("+red_piece[j].x +"," + red_piece[j].y+")")
+            //.attr("y", red_piece[j].y)
             .attr("width", square_size)
             .attr("height", square_size)
             .style("opacity", 0.5)
             .style("stroke-width",2)
-            .style("stroke", "white")
             .attr("rx", 3)
             .attr("ry", 3)
             .style("fill", "red")
+        y_center = y_center + red_piece[j].y + (square_size/2.0)
+        x_center = x_center + red_piece[j].x + (square_size/2.0)
+        center_denom++;
     }
+    y_center /= center_denom
+    x_center /= center_denom
+    piece.attr("cx", x_center).attr("cy",y_center)
     red_pieces.push(piece)
 }
 //var blue_pieces = []
@@ -182,6 +243,7 @@ for(var i = 0; i < piece_array.length; i++){
 //        .attr("x", function(d) { return d.x*square_size + piece_offset[i]*square_size})
 //        .attr("y", function(d) { return d.y*square_size
 //}
+
 
 
 </script>
