@@ -130,23 +130,14 @@ function dragmove(d) {
     var trans = d3.transform(active_piece.attr("transform"))
     var rotate = trans.rotate
     var scale = trans.scale[0]
-            
-       // var center_x = d3.event.dx + parseFloat(d3.select(this).attr("cx"))
-       //     var center_y = d3.event.dy + parseFloat(d3.select(this).attr("cy"))
-       //     console.log("makes new cx "+center_x)
-       //     var rotate = d3.transform(d3.select(this).attr("transform")).rotate
-       //     d3.select(this).attr("transform", "translate(" + d.x + "," + d.y + ") rotate("+rotate+")")
-       //         .attr("cx", center_x)
-       //         .attr("cy", center_y);
-        update_trans(active_piece, d.x, d.y, rotate, scale) 
+    update_trans(active_piece, d.x, d.y, rotate, scale) 
 }  
 function onDragDrop(dragHandler, dropHandler) {
         var drag = d3.behavior.drag();
-
     drag.on("drag", dragHandler)
     .on("dragend", dropHandler);
     return drag;
-    }
+}
 function dropHandler(d) {
     var trans = d3.transform(active_piece.attr("transform"))
     var rotate = trans.rotate
@@ -155,7 +146,7 @@ function dropHandler(d) {
     d.x = Math.round(d.x/square_size)*square_size
     d.y = Math.round(d.y/square_size)*square_size
     update_trans(active_piece, d.x, d.y, rotate, scale)
-    //d3.select(this).attr("transform", "translate(" + new_x + "," + new_y + ") rotate("+rotate+")")
+    
 }
 
 function mirror(){
@@ -170,6 +161,7 @@ function mirror(){
 }
 
 function update_trans(p, x, y, r, s){
+    r = Math.round(r + 360) % 360
     p.attr("transform", "translate("+x+","+y+") rotate("+r+") scale("+s+",1)")
 }
 
@@ -178,7 +170,7 @@ function right_rotate(){
         var trans = d3.transform(active_piece.attr("transform"))
         var x = trans.translate[0]
         var y = trans.translate[1]
-        var rotate = trans.rotate - 90
+        var rotate = Math.round(trans.rotate + 90)
         var scale = trans.scale[0]
         update_trans(active_piece, x, y, rotate, scale)
     }
@@ -198,6 +190,77 @@ function shape_to_array(shape_matrix, name, square_size, x_offset, y_offset){
     }
     return rect_array
 }
+
+function svg_rect_group_to_board_indices(shape){
+    //var rect_array = shape.selectAll("rect")[0]
+    var trans = d3.transform(shape.attr("transform"))
+    
+    var shape_translations = []
+    shape.selectAll("rect").each(function(d,i){ shape_translations.push(d3.select(this).attr("transform"))}) 
+    var toRet = [] 
+    var x = trans.translate[0]
+    var y = trans.translate[1]
+    var scale = trans.scale[0]
+    console.log("rotate not modded "+trans.rotate)
+    var rotate = Math.round(trans.rotate +360) % 360
+    console.log("shape offset "+x+", "+y) 
+    for(var i = 0; i < shape_translations.length; i++){
+        console.log(shape_translations[i])
+    
+        var trans2 = d3.transform(shape_translations[i])
+        var x2 = trans2.translate[0]
+        var y2 = trans2.translate[1]
+        var x_f = 0
+        var y_f = 0
+        console.log(rotate+ "rotate")
+        console.log(x2+", "+y2)
+        if(rotate == 0){
+            x_f = x + x2*scale 
+            if(scale < 0){
+                x_f -= square_size
+            }
+            y_f = y + y2
+        }
+        else if(rotate == 90){
+            x_f = x - y2 - square_size
+            y_f = y + x2*scale 
+            if(scale < 0){
+                y_f -= square_size
+            }
+        }
+        else if(rotate == 180){
+            x_f = x - x2*scale - square_size*scale
+            y_f = y - y2 - square_size
+            if(scale < 0){
+                x_f -= square_size
+            }
+        }
+        else if(rotate == 270){
+            x_f = x + y2 
+            y_f = y - x2*scale - square_size*scale
+            if(scale < 0){
+                y_f -= square_size
+            }
+            
+        }
+        console.log("rect location "+x_f+", "+y_f)
+        console.log("board location "+(x_f-200)/square_size+", "+(y_f-200)/square_size)
+        toRet.push({"x":x, "y":y, 'i':(x-200)/square_size, 'j':(y-200)/square_size})
+    }
+   // return toRet
+}
+
+function applyMove(){
+    if(active_piece != null){
+        svg_rect_group_to_board_indices(active_piece)
+        //color = active_piece.attr("fill")
+        //for(var i = 0; i < location.length; i++){
+        //    console.log(location[i].i+", "+location[i].j)
+        //}
+        console.log("active")
+    }
+}
+
 function handle_keys(d){
     if(d3.event.keyCode == 16){
         right_rotate()
@@ -205,7 +268,11 @@ function handle_keys(d){
     if(d3.event.keyCode == 17){
         mirror()
     }
+    if(d3.event.keyCode == 13){
+        applyMove()
+    }
 }
+
 d3.select("body").on("keydown", handle_keys);
 
 var red_pieces = []
@@ -221,7 +288,6 @@ for(var i = 0; i < piece_array.length; i++){
         .attr("stroke","white")
         .attr("transform", function (d) { return "translate(" + d.x + "," + d.y + ")"; })
         .call(onDragDrop(dragmove, dropHandler))
-        
         
     for(var j = 0; j < red_piece.length; j++){
         piece.append("rect")
